@@ -8,6 +8,12 @@ function build_sample_app() {
   minikube image load sample-app
 }
 
+function build_frontend() {
+  pushd frontend || exit
+  docker build -t frontend .
+  popd || exit
+}
+
 function sample_app_clean() {
   docker image rm --force sample-app
 }
@@ -75,4 +81,5 @@ case "$1" in
   "run-pod-health-check") run_pod_health_check ;;
   "delete-pod-health-check") delete_pod_health_check ;;
   "describe-pod-health-check") describe_pod_health_check ;;
+  "build-frontend") build_frontend ;;
 esac
