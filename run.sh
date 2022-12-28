@@ -37,6 +37,30 @@ function delete_simple_deployment() {
   kubectl delete -f simple-deployment/deployment.yaml
 }
 
+function set_pod_health_unhealthy() {
+  url=$(minikube service pod-health-check-service --url)
+  curl -X POST "${url}/health" --data '{"health": "UNHEALTHY"}' -H 'Content-Type: application/json'
+}
+
+function set_pod_health_healthy() {
+  url=$(minikube service pod-health-check-service --url)
+  curl -X POST "${url}/health" --data '{"health": "HEALTHY"}' -H 'Content-Type: application/json'
+}
+
+function run_pod_health_check() {
+  kubectl apply -f pod-health-check/pod.yaml
+  kubectl apply -f pod-health-check/service.yaml
+}
+
+function delete_pod_health_check() {
+  kubectl delete -f pod-health-check/service.yaml
+  kubectl delete -f pod-health-check/pod.yaml
+}
+
+function describe_pod_health_check() {
+    kubectl describe pods pod-health-check
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -45,4 +69,9 @@ case "$1" in
   "restart-simple-deployment") restart_simple_deployment ;;
   "create-simple-deployment") create_simple_deployment ;;
   "delete-simple-deployment") delete_simple_deployment ;;
+  "set-pod-health-unhealthy") set_pod_health_unhealthy ;;
+  "set-pod-health-healthy") set_pod_health_healthy ;;
+  "run-pod-health-check") run_pod_health_check ;;
+  "delete-pod-health-check") delete_pod_health_check ;;
+  "describe-pod-health-check") describe_pod_health_check ;;
 esac

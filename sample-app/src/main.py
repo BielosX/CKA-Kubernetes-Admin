@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 import json
 import socket
 import os
@@ -8,6 +8,7 @@ app = Flask(__name__)
 
 ip = socket.gethostbyname(socket.getfqdn())
 started = time.ctime(os.path.getmtime('/proc/1/cmdline'))
+health = "HEALTHY"
 
 
 @app.route("/")
@@ -22,3 +23,19 @@ def details():
         'ip': str(ip)
     }
     return json.dumps(response)
+
+
+@app.route("/health")
+def health():
+    if health == "HEALTHY":
+        return health, 200
+    else:
+        return "UNHEALTHY", 500
+
+
+@app.route("/health", methods=['POST'])
+def set_health():
+    data = request.get_json()
+    global health
+    health = data['health']
+    return "OK"
