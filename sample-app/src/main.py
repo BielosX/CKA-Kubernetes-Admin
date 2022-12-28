@@ -26,7 +26,8 @@ def details():
 
 
 @app.route("/health")
-def health():
+def get_health():
+    global health
     if health == "HEALTHY":
         return health, 200
     else:

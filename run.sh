@@ -1,6 +1,7 @@
 #!/bin/bash
 
 function build_sample_app() {
+  eval "$(minikube docker-env)"
   pushd sample-app || exit
   docker build -t sample-app .
   popd || exit
