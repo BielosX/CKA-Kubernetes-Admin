@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: first-deployment
+  namespace: first-namespace
+  labels:
+    app: sample-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      namespace: first-namespace
+      labels:
+        app: sample-app
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: sample-app
+          image: sample-app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000

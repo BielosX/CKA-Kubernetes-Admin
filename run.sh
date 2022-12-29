@@ -87,6 +87,30 @@ function delete_ingress() {
   kubectl delete -f ingress/backend-deployment.yaml
 }
 
+function create_namespaces() {
+  kubectl apply -f namespaces/first-namespace.yaml
+  kubectl apply -f namespaces/first-deployment.yaml
+  kubectl apply -f namespaces/first-service.yaml
+  kubectl apply -f namespaces/second-namespace.yaml
+  kubectl apply -f namespaces/second-deployment.yaml
+  kubectl apply -f namespaces/second-service.yaml
+}
+
+function list_first_namespace() {
+  kubectl get all --namespace=first-namespace
+  minikube service first-deployment-service -n first-namespace --url
+}
+
+function list_second_namespace() {
+  kubectl get all --namespace=second-namespace
+  minikube service second-deployment-service -n second-namespace --url
+}
+
+function delete_namespaces() {
+  kubectl delete namespace first-namespace
+  kubectl delete namespace second-namespace
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -103,4 +127,8 @@ case "$1" in
   "build-frontend") build_frontend ;;
   "run-ingress") run_ingress ;;
   "delete-ingress") delete_ingress ;;
+  "create-namespaces") create_namespaces ;;
+  "list-first-namespace") list_first_namespace ;;
+  "list-second-namespace") list_second_namespace ;;
+  "delete-namespaces") delete_namespaces ;;
 esac
