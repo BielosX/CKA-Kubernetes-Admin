@@ -9,9 +9,11 @@ function build_sample_app() {
 }
 
 function build_frontend() {
+  eval "$(minikube docker-env)"
   pushd frontend || exit
   docker build -t frontend .
   popd || exit
+  minikube image load frontend
 }
 
 function sample_app_clean() {
@@ -68,6 +70,24 @@ function describe_pod_health_check() {
     kubectl describe pods pod-health-check
 }
 
+# add app.com to /etc/hosts or use curl with -H "Host: app.com"
+function run_ingress() {
+  minikube addons enable ingress
+  kubectl apply -f ingress/backend-deployment.yaml
+  kubectl apply -f ingress/frontend-deployment.yaml
+  kubectl apply -f ingress/backend-service.yaml
+  kubectl apply -f ingress/frontend-service.yaml
+  kubectl apply -f ingress/ingress.yaml
+}
+
+function delete_ingress() {
+  kubectl delete -f ingress/ingress.yaml
+  kubectl delete -f ingress/frontend-service.yaml
+  kubectl delete -f ingress/backend-service.yaml
+  kubectl delete -f ingress/frontend-deployment.yaml
+  kubectl delete -f ingress/backend-deployment.yaml
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -82,4 +102,6 @@ case "$1" in
   "delete-pod-health-check") delete_pod_health_check ;;
   "describe-pod-health-check") describe_pod_health_check ;;
   "build-frontend") build_frontend ;;
+  "run-ingress") run_ingress ;;
+  "delete-ingress") delete_ingress ;;
 esac

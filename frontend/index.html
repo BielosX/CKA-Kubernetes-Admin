@@ -1,5 +1,20 @@
 <html lang="en">
+    <script>
+        function getDetails() {
+            fetch('/api/details')
+                .then(response => response.json())
+                .then(data => {
+                    const started = document.getElementById('started');
+                    const ip = document.getElementById('ip');
+                    started.textContent = `Started: ${data.started}`;
+                    ip.textContent = `IP: ${data.ip}`;
+                })
+        }
+    </script>
     <body>
         <h1>Hello</h1>
+        <button onclick="getDetails()">Details</button>
+        <p id="started"></p>
+        <p id="ip"></p>
     </body>
 </html>
