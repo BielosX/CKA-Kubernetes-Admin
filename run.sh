@@ -70,7 +70,6 @@ function describe_pod_health_check() {
     kubectl describe pods pod-health-check
 }
 
-# add app.com to /etc/hosts or use curl with -H "Host: app.com"
 function run_ingress() {
   minikube addons enable ingress
   kubectl apply -f ingress/backend-deployment.yaml
