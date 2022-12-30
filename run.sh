@@ -88,12 +88,7 @@ function delete_ingress() {
 }
 
 function create_namespaces() {
-  kubectl apply -f namespaces/first-namespace.yaml
-  kubectl apply -f namespaces/first-deployment.yaml
-  kubectl apply -f namespaces/first-service.yaml
-  kubectl apply -f namespaces/second-namespace.yaml
-  kubectl apply -f namespaces/second-deployment.yaml
-  kubectl apply -f namespaces/second-service.yaml
+  kubectl apply -f namespaces/namespaces.yaml
 }
 
 function list_first_namespace() {

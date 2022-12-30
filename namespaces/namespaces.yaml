@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: first-namespace
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: second-namespace
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: first-deployment
+  namespace: first-namespace
+  labels:
+    app: sample-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      namespace: first-namespace
+      labels:
+        app: sample-app
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: sample-app
+          image: sample-app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 800
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: second-deployment
+  namespace: second-namespace
+  labels:
+    app: sample-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      namespace: second-namespace
+      labels:
+        app: sample-app
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: sample-app
+          image: sample-app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: first-deployment-service
+  namespace: first-namespace
+spec:
+  type: NodePort
+  selector:
+    app: sample-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: second-deployment-service
+  namespace: second-namespace
+spec:
+  type: NodePort
+  selector:
+    app: sample-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
