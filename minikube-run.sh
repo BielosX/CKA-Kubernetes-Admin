@@ -128,6 +128,19 @@ function delete_init_container() {
   popd || exit
 }
 
+function deploy_multi_container_pod() {
+  kubectl apply -f multi-container-pod/config.yaml
+  minikube service multi-container-pod-service --url
+}
+
+function delete_multi_container_pod() {
+  kubectl delete -f multi-container-pod/config.yaml
+}
+
+function get_fluent_bit_logs() {
+  kubectl logs -l name=multi-container-pod -c fluent-bit
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -150,4 +163,7 @@ case "$1" in
   "delete-namespaces") delete_namespaces ;;
   "deploy-init-container") deploy_init_container ;;
   "delete-init-container") delete_init_container ;;
+  "deploy-multi-container-pod") deploy_multi_container_pod ;;
+  "delete-multi-container-pod") delete_multi_container_pod ;;
+  "get-fluent-bit-logs") get_fluent_bit_logs ;;
 esac

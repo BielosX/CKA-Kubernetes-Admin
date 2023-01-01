@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multi-container-pod-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: multi-container-pod
+  template:
+    metadata:
+      labels:
+        name: multi-container-pod
+    spec:
+      restartPolicy: Always
+      volumes:
+        - name: log-volume
+          emptyDir:
+            sizeLimit: 500Mi
+      containers:
+        - name: fluent-bit
+          image: fluent/fluent-bit:2.0.8
+          args: ["-i", "tail", "-p", "path=/var/log/nginx/access.log", "-o", "stdout"]
+          volumeMounts:
+            - mountPath: /var/log/nginx
+              name: log-volume
+        - name: nginx
+          image: nginx:1.23.3-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /var/log/nginx
+              name: log-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: multi-container-pod-service
+spec:
+  type: NodePort
+  selector:
+    name: multi-container-pod
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
