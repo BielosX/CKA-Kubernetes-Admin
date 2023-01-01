@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.fullname }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: {{ .Values.app.fullname }}
+  template:
+    metadata:
+      labels:
+        name: {{ .Values.app.fullname }}
+    spec:
+      initContainers:
+        - name: flyway
+          imagePullPolicy: Never
+          image: "{{ .Values.app.flywayImage }}:{{ .Values.app.flywayTag }}"
+          args: ["-url=jdbc:postgresql://db-service:5432/postgres?user=postgres&password=test", "migrate"]
+      containers:
+        - name: test
+          image: "{{ .Values.app.image }}:{{ .Values.app.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: PORT
+              value: "{{ .Values.service.port }}"
+            - name: DB_HOST
+              value: db-service
+            - name: DB_USER
+              value: postgres
+            - name: DB_PASSWORD
+              value: test

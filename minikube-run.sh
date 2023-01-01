@@ -1,5 +1,7 @@
 #!/bin/bash
 
+MOUNT_PID=/tmp/minikube-mount.pid
+
 function build_sample_app() {
   eval "$(minikube docker-env)"
   pushd sample-app || exit
@@ -106,6 +108,26 @@ function delete_namespaces() {
   kubectl delete namespace second-namespace
 }
 
+function deploy_init_container() {
+  eval "$(minikube docker-env)"
+  timestamp=$(date +%s)
+  pushd init-container || exit
+  kubectl apply -f db.yaml
+  kubectl wait pods --for condition=Ready -l name=postgres --timeout 120s
+  docker build -t "flyway-migration:${timestamp}" flyway
+  yarn build
+  docker build -t "demo-app:${timestamp}" .
+  helm upgrade --set "app.flywayTag=${timestamp}" --set "app.tag=${timestamp}" --install app ./app
+  popd || exit
+}
+
+function delete_init_container() {
+  pushd init-container || exit
+  helm uninstall app
+  kubectl delete -f db.yaml
+  popd || exit
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -126,4 +148,6 @@ case "$1" in
   "list-first-namespace") list_first_namespace ;;
   "list-second-namespace") list_second_namespace ;;
   "delete-namespaces") delete_namespaces ;;
+  "deploy-init-container") deploy_init_container ;;
+  "delete-init-container") delete_init_container ;;
 esac

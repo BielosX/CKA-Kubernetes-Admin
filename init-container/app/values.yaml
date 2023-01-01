@@ -1,0 +1,7 @@
+service:
+  type: NodePort
+  port: 8080
+app:
+  fullname: demo-app
+  image: demo-app
+  flywayImage: flyway-migration
