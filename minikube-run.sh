@@ -141,6 +141,10 @@ function get_fluent_bit_logs() {
   kubectl logs -l name=multi-container-pod -c fluent-bit
 }
 
+function deploy_static_pod() {
+  minikube cp static-pod/pod.yaml /etc/kubernetes/manifests/nginx.yaml
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -166,4 +170,5 @@ case "$1" in
   "deploy-multi-container-pod") deploy_multi_container_pod ;;
   "delete-multi-container-pod") delete_multi_container_pod ;;
   "get-fluent-bit-logs") get_fluent_bit_logs ;;
+  "deploy-static-pod") deploy_static_pod ;;
 esac
