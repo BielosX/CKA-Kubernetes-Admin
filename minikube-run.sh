@@ -1,7 +1,5 @@
 #!/bin/bash
 
-MOUNT_PID=/tmp/minikube-mount.pid
-
 function build_sample_app() {
   eval "$(minikube docker-env)"
   pushd sample-app || exit
