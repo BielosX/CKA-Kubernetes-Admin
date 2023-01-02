@@ -145,6 +145,16 @@ function deploy_static_pod() {
   minikube cp static-pod/pod.yaml /etc/kubernetes/manifests/nginx.yaml
 }
 
+function deploy_startup_probe() {
+  kubectl apply -f startup-probe/config.yaml
+  kubectl wait pods --for condition=Ready -l name=postgres --timeout 120s
+  minikube service startup-probe-service --url
+}
+
+function delete_startup_probe() {
+  kubectl delete -f startup-probe/config.yaml
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -171,4 +181,6 @@ case "$1" in
   "delete-multi-container-pod") delete_multi_container_pod ;;
   "get-fluent-bit-logs") get_fluent_bit_logs ;;
   "deploy-static-pod") deploy_static_pod ;;
+  "deploy-startup-probe") deploy_startup_probe ;;
+  "delete-startup-probe") delete_startup_probe ;;
 esac
