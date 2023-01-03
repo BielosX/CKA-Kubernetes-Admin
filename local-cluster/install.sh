@@ -1,9 +1,39 @@
 #!/bin/bash
 
+yes | pacman -Syu
+yes | pacman -S socat
+yes | pacman -S ethtool
+yes | pacman -S make
+yes | pacman -S gcc
+yes | pacman -S conntrack-tools
+yes | pacman -S bridge-utils
+
 echo "Disable SWAP"
 
 sed -ri '/\sswap\s/s/^#?/#/' /etc/fstab
 swapoff -a
+
+echo "Install ebtables"
+
+wget -O ebtables.tar.gz "https://www.netfilter.org/pub/ebtables/ebtables-v2.0.10-4.tar.gz"
+mkdir -p ebtables
+tar -xf ebtables.tar.gz --strip-components 1 -C ebtables
+
+pushd ebtables || exit
+make CFLAGS='-Wunused -Wall -Werror -Wno-error=unused-but-set-variable'
+make install \
+    LIBDIR=/usr/lib \
+    MANDIR=/usr/share/man \
+    BINDIR=/usr/bin \
+    INITDIR=/etc/rc.d \
+    SYSCONFIGDIR=/etc
+popd || exit
+
+echo "br_netfilter" >> /etc/modules-load.d/br_netfilter.conf
+modprobe br_netfilter
+echo "net.bridge.bridge-nf-call-iptables = 1" >> /etc/sysctl.conf
+echo 1 > /proc/sys/net/ipv4/ip_forward
+sysctl -p
 
 echo "Install containerd"
 
