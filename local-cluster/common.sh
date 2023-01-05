@@ -55,7 +55,7 @@ wget -nv -O runc.amd64 "https://github.com/opencontainers/runc/releases/download
 install -m 755 runc.amd64 /usr/local/sbin/runc
 
 mkdir -p /etc/containerd
-containerd config default > /etc/containerd/config.toml
+cp /tmp/containerd/config.toml /etc/containerd
 
 systemctl daemon-reload
 systemctl enable containerd.service
