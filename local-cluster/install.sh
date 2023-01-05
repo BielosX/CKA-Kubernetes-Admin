@@ -7,6 +7,7 @@ yes | pacman -S make
 yes | pacman -S gcc
 yes | pacman -S conntrack-tools
 yes | pacman -S bridge-utils
+yes | pacman -S kubectl
 
 echo "Disable SWAP"
 
@@ -31,9 +32,14 @@ popd || exit
 
 echo "br_netfilter" >> /etc/modules-load.d/br_netfilter.conf
 modprobe br_netfilter
-echo "net.bridge.bridge-nf-call-iptables = 1" >> /etc/sysctl.conf
-echo 1 > /proc/sys/net/ipv4/ip_forward
-sysctl -p
+
+cat > /etc/sysctl.d/kubernetes.conf <<-EOM
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOM
+
+sysctl --system
 
 echo "Install containerd"
 
@@ -47,6 +53,9 @@ wget -nv -O /usr/local/lib/systemd/system/containerd.service https://raw.githubu
 RUNC_VERSION="$2"
 wget -nv -O runc.amd64 "https://github.com/opencontainers/runc/releases/download/v${RUNC_VERSION}/runc.amd64"
 install -m 755 runc.amd64 /usr/local/sbin/runc
+
+mkdir -p /etc/containerd
+containerd config default > /etc/containerd/config.toml
 
 systemctl daemon-reload
 systemctl enable containerd.service
