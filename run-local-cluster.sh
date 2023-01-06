@@ -7,7 +7,6 @@ fi
 function start_cluster() {
     pushd local-cluster || exit
     NODES="$NODES" vagrant up
-    config
     popd || exit
 }
 
