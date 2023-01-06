@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
         subconfig.vm.provision "shell", path: "node.sh"
       end
   end
-
+  config.vm.synced_folder "configs", "/vagrant/configs", create: true
   config.vm.provision "file", source: "containerd/config.toml", destination: "/tmp/containerd/config.toml"
   config.vm.provision "shell", path: "common.sh", args: ["1.6.14", "1.1.4", "1.1.1", "1.25.0", "0.4.0"]
 end
