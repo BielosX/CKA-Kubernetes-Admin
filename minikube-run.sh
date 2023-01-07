@@ -158,6 +158,21 @@ function delete_startup_probe() {
   kubectl delete -f startup-probe/config.yaml
 }
 
+function deploy_rolling_deployment() {
+  build_sample_app
+  temp_file=$(mktemp)
+  sed -e "s/{tag}/${timestamp}/g" deployment-strategy/rolling.yaml > "$temp_file"
+  kubectl apply -f "$temp_file"
+  kubectl rollout status deployment rolling-deployment
+  rm -f "$temp_file"
+  minikube service rolling-service --url
+}
+
+function rolling_deployment_rollback() {
+  kubectl rollout undo deployment rolling-deployment
+  kubectl rollout status deployment rolling-deployment
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -186,4 +201,6 @@ case "$1" in
   "deploy-static-pod") deploy_static_pod ;;
   "deploy-startup-probe") deploy_startup_probe ;;
   "delete-startup-probe") delete_startup_probe ;;
+  "deploy-rolling-deployment") deploy_rolling_deployment ;;
+  "rolling-deployment-rollback") rolling_deployment_rollback ;;
 esac
