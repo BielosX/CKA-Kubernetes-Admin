@@ -2,10 +2,11 @@
 
 function build_sample_app() {
   eval "$(minikube docker-env)"
+  timestamp=$(date +%s)
   pushd sample-app || exit
-  docker build -t sample-app .
+  echo "{ \"version\": \"${timestamp}\" }" > manifest.json
+  docker build -t "sample-app:${timestamp}" -t "sample-app:latest" .
   popd || exit
-  minikube image load sample-app
 }
 
 function build_frontend() {
@@ -21,7 +22,11 @@ function sample_app_clean() {
 }
 
 function run_simple_pod() {
-  kubectl apply -f simple-pod/pod.yaml
+  build_sample_app
+  temp_file=$(mktemp)
+  sed -e "s/{tag}/${timestamp}/g" simple-pod/pod.yaml > "$temp_file"
+  kubectl apply -f "$temp_file"
+  rm -f "$temp_file"
   kubectl apply -f simple-pod/service.yaml
   minikube service simple-service --url
 }

@@ -8,7 +8,7 @@ spec:
   restartPolicy: Always
   containers:
     - name: sample-app
-      image: sample-app:latest
+      image: sample-app:{tag}
       imagePullPolicy: Never
       ports:
         - containerPort: 8000

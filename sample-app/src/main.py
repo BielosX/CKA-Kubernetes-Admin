@@ -10,6 +10,10 @@ ip = socket.gethostbyname(socket.getfqdn())
 started = time.ctime(os.path.getmtime('/proc/1/cmdline'))
 health = "HEALTHY"
 
+with open('manifest.json', 'r') as file:
+    content = json.loads(file.read())
+    version = content['version']
+
 
 @app.route("/")
 def hello_world():
@@ -40,3 +44,8 @@ def set_health():
     global health
     health = data['health']
     return "OK"
+
+
+@app.route("/version")
+def get_version():
+    return version
