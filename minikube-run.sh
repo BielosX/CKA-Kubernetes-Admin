@@ -173,6 +173,18 @@ function rolling_deployment_rollback() {
   kubectl rollout status deployment rolling-deployment
 }
 
+function deploy_recreate_deployment() {
+  build_sample_app
+  sed -e "s/{tag}/${timestamp}/g" deployment-strategy/recreate.yaml | kubectl apply -f -
+  kubectl rollout status deployment recreate-deployment
+  minikube service recreate-service --url
+}
+
+function recreate_deployment_rollback() {
+  kubectl rollout undo deployment recreate-deployment
+  kubectl rollout status deployment recreate-deployment
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -203,4 +215,6 @@ case "$1" in
   "delete-startup-probe") delete_startup_probe ;;
   "deploy-rolling-deployment") deploy_rolling_deployment ;;
   "rolling-deployment-rollback") rolling_deployment_rollback ;;
+  "deploy-recreate-deployment") deploy_recreate_deployment ;;
+  "recreate-deployment-rollback") recreate_deployment_rollback ;;
 esac
