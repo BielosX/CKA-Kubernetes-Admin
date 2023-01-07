@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: demo-daemonset
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: demo-daemonset
+  template:
+    metadata:
+      labels:
+        name: demo-daemonset
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: nginx
+          image: nginx:1.23.3-alpine
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              port: 80
