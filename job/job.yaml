@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: spring-petclinic-build
+spec:
+  backoffLimit: 4
+  activeDeadlineSeconds: 1200
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: build
+          imagePullPolicy: Never
+          image: maven-env:{tag}
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - git clone https://github.com/spring-projects/spring-petclinic.git && cd spring-petclinic && mvn -T 4 verify

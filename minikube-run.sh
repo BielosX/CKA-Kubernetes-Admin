@@ -9,6 +9,14 @@ function build_sample_app() {
   popd || exit
 }
 
+function build_maven_env() {
+  eval "$(minikube docker-env)"
+  timestamp=$(date +%s)
+  pushd job || exit
+  docker build -t "maven-env:${timestamp}" -t "maven-env:latest" .
+  popd || exit
+}
+
 function build_frontend() {
   eval "$(minikube docker-env)"
   pushd frontend || exit
@@ -185,6 +193,18 @@ function recreate_deployment_rollback() {
   kubectl rollout status deployment recreate-deployment
 }
 
+function create_build_job() {
+  build_maven_env
+  sed -e "s/{tag}/${timestamp}/g" job/job.yaml | kubectl apply -f -
+  kubectl wait pods --for condition=Ready -l job-name=spring-petclinic-build --timeout 120s
+  pod_name=$(kubectl get pods -l job-name=spring-petclinic-build -o json | jq -r '.items[0].metadata.name')
+  kubectl logs "$pod_name" --follow
+}
+
+function delete_build_job() {
+  kubectl delete job spring-petclinic-build
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -217,4 +237,6 @@ case "$1" in
   "rolling-deployment-rollback") rolling_deployment_rollback ;;
   "deploy-recreate-deployment") deploy_recreate_deployment ;;
   "recreate-deployment-rollback") recreate_deployment_rollback ;;
+  "create-build-job") create_build_job ;;
+  "delete-build-job") delete_build_job ;;
 esac
