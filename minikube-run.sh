@@ -205,6 +205,15 @@ function delete_build_job() {
   kubectl delete job spring-petclinic-build
 }
 
+function create_build_cron_job() {
+  build_maven_env
+  sed -e "s/{tag}/${timestamp}/g" cron-job/config.yaml | kubectl apply -f -
+}
+
+function delete_build_cron_job() {
+  kubectl delete cronjob spring-petclinic-periodic-build
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -239,4 +248,6 @@ case "$1" in
   "recreate-deployment-rollback") recreate_deployment_rollback ;;
   "create-build-job") create_build_job ;;
   "delete-build-job") delete_build_job ;;
+  "create-build-cron-job") create_build_cron_job ;;
+  "delete-build-cron-job") delete_build_cron_job ;;
 esac
