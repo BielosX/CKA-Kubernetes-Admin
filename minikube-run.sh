@@ -214,6 +214,27 @@ function delete_build_cron_job() {
   kubectl delete cronjob spring-petclinic-periodic-build
 }
 
+function create_secret_deployment() {
+  kubectl create secret generic postgres-credentials \
+    --from-literal=USERNAME='demo-user' \
+    --from-literal=PASSWORD='aphisoPTiVEnSimP'
+  kubectl apply -f secrets/db.yaml
+  kubectl wait pods --for condition=Ready -l name=postgres --timeout 120s
+}
+
+function delete_secret_deployment() {
+  kubectl delete -f secrets/db.yaml
+  kubectl delete -f secrets/secret.yaml
+}
+
+function connect_secret_deployment_db() {
+  ip=$(kubectl get service db-service -o json | jq -r '.spec.clusterIP')
+  node_port=$(kubectl get service db-service -o json | jq -r '.spec.ports[0].nodePort')
+  username=$(kubectl get secret postgres-credentials -o json | jq -r '.data.USERNAME' | base64 -d)
+  password=$(kubectl get secret postgres-credentials -o json | jq -r '.data.PASSWORD' | base64 -d)
+  PGPASSWORD="$password" psql -h "$ip" -p "$node_port" -U "$username"
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -250,4 +271,7 @@ case "$1" in
   "delete-build-job") delete_build_job ;;
   "create-build-cron-job") create_build_cron_job ;;
   "delete-build-cron-job") delete_build_cron_job ;;
+  "create-secret-deployment") create_secret_deployment ;;
+  "delete-secret-deployment") delete_secret_deployment ;;
+  "connect-secret-deployment-db") connect_secret_deployment_db ;;
 esac
