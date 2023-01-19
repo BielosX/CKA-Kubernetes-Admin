@@ -228,7 +228,7 @@ function delete_secret_deployment() {
 }
 
 function connect_secret_deployment_db() {
-  ip=$(kubectl get service db-service -o json | jq -r '.spec.clusterIP')
+  ip=$(minikube ip)
   node_port=$(kubectl get service db-service -o json | jq -r '.spec.ports[0].nodePort')
   username=$(kubectl get secret postgres-credentials -o json | jq -r '.data.USERNAME' | base64 -d)
   password=$(kubectl get secret postgres-credentials -o json | jq -r '.data.PASSWORD' | base64 -d)
