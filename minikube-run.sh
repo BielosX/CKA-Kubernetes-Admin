@@ -219,7 +219,9 @@ function create_secret_deployment() {
     --from-literal=USERNAME='demo-user' \
     --from-literal=PASSWORD='aphisoPTiVEnSimP'
   kubectl apply -f secrets/db.yaml
+  kubectl apply -f secrets/volume-secret.yaml
   kubectl wait pods --for condition=Ready -l name=postgres --timeout 120s
+  kubectl wait pods --for condition=Ready -l name=demo --timeout 120s
 }
 
 function delete_secret_deployment() {
@@ -233,6 +235,13 @@ function connect_secret_deployment_db() {
   username=$(kubectl get secret postgres-credentials -o json | jq -r '.data.USERNAME' | base64 -d)
   password=$(kubectl get secret postgres-credentials -o json | jq -r '.data.PASSWORD' | base64 -d)
   PGPASSWORD="$password" psql -h "$ip" -p "$node_port" -U "$username"
+}
+
+function get_secret_volume_content() {
+  pod_name=$(kubectl get pods -l name=demo -o json | jq -r '.items[0].metadata.name')
+  username=$(kubectl exec -it "$pod_name" -- cat /etc/demo/USERNAME)
+  password=$(kubectl exec -it "$pod_name" -- cat /etc/demo/PASSWORD)
+  echo "username: ${username}, password: ${password}"
 }
 
 case "$1" in
@@ -274,4 +283,5 @@ case "$1" in
   "create-secret-deployment") create_secret_deployment ;;
   "delete-secret-deployment") delete_secret_deployment ;;
   "connect-secret-deployment-db") connect_secret_deployment_db ;;
+  "get-secret-volume-content") get_secret_volume_content ;;
 esac
