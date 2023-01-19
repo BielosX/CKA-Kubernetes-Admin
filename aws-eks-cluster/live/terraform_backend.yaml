@@ -1,0 +1,20 @@
+Resources:
+  StateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "eks-cluster-${AWS::Region}-${AWS::AccountId}"
+      AccessControl: "AuthenticatedRead"
+  LockTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "eks-cluster-lock"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "LockID"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "LockID"
+          KeyType: "HASH"
+Outputs:
+  BucketName:
+    Value: !Ref StateBucket

@@ -1,2 +1,4 @@
 .idea
 .vagrant
+.terragrunt-cache
+.terraform.lock.hcl
