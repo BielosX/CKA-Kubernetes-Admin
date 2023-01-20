@@ -13,7 +13,7 @@ function deploy() {
 
 function destroy() {
   pushd aws-eks-cluster/live || exit
-  terragrunt run-all destroy --terragrunt-working-dir qa --terragrunt-non-interactive
+  terragrunt run-all destroy --terragrunt-working-dir qa --terragrunt-non-interactive || exit
   BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name "$BACKEND_STACK" | jq -r '.Stacks[0].Outputs[0].OutputValue')
   aws s3 rm --recursive "s3://$BUCKET_NAME"
   aws cloudformation delete-stack --stack-name "$BACKEND_STACK"
