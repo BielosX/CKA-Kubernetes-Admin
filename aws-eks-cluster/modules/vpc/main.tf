@@ -63,7 +63,7 @@ resource "aws_route_table_association" "public-route-table-association" {
 }
 
 resource "aws_eip" "epi" {
-  count = var.public-subnets
+  count = var.single-nat-gateway ? 1 : var.public-subnets
   vpc = true
   tags = merge({
     Name: "${var.name}-nat-gw-eip"
@@ -71,7 +71,7 @@ resource "aws_eip" "epi" {
 }
 
 resource "aws_nat_gateway" "nat-gateway" {
-  count = var.public-subnets
+  count = var.single-nat-gateway ? 1 : var.public-subnets
   subnet_id = aws_subnet.pubic-subnet[count.index].id
   allocation_id = aws_eip.epi[count.index].id
 
@@ -81,7 +81,7 @@ resource "aws_nat_gateway" "nat-gateway" {
 }
 
 resource "aws_route_table" "private-route-table" {
-  count = var.public-subnets
+  count = var.single-nat-gateway ? 1 : var.public-subnets
   vpc_id = aws_vpc.vpc.id
 
   route {
@@ -96,6 +96,8 @@ resource "aws_route_table" "private-route-table" {
 
 resource "aws_route_table_association" "private-route-table-association" {
   count = var.private-subnets
-  route_table_id = aws_route_table.private-route-table[count.index % var.private-subnets].id
+  route_table_id = (var.single-nat-gateway ?
+    (aws_route_table.private-route-table[0].id) :
+    (aws_route_table.private-route-table[count.index % var.public-subnets].id))
   subnet_id = aws_subnet.private-subnet[count.index].id
 }

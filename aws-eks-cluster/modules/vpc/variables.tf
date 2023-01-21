@@ -37,3 +37,7 @@ variable "availability-zones" {
   type = list(string)
   default = []
 }
+
+variable "single-nat-gateway" {
+  type = bool
+}

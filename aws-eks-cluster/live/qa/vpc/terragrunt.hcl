@@ -23,4 +23,5 @@ inputs = {
   private-subnets = 2
   name = "eks-cluster-vpc"
   subnet-size = 256
+  single-nat-gateway = true
 }
