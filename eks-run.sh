@@ -21,7 +21,13 @@ function destroy() {
   popd || exit
 }
 
+function kubeconfig() {
+  rm ~/.kube/config
+  aws eks update-kubeconfig --region "$AWS_REGION" --name eks-demo-cluster
+}
+
 case "$1" in
   "deploy") deploy ;;
   "destroy") destroy ;;
+  "kubeconfig") kubeconfig ;;
 esac
