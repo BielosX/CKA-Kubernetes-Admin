@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ebs-persistent-volume
+  labels:
+    app.kubernetes.io/name: ebs-persistent-volume
+spec:
+  capacity:
+    storage: 10Gi
+  # If the volume is backed by a block device and the device is empty
+  # Kubernetes creates a filesystem on the device before mounting it for the first time
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  csi:
+    driver: ebs.csi.aws.com
+    fsType: ext4
+    volumeHandle: "{volume_id}"
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.ebs.csi.aws.com/zone
+              operator: In
+              values:
+                - "{availability_zone}"
