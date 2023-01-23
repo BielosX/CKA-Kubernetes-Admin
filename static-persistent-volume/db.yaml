@@ -3,16 +3,13 @@ kind: PersistentVolumeClaim
 metadata:
   name: ebs-volume-claim
 spec:
-  storageClassName: ""
+  storageClassName: "" # Required for static provisioning
   accessModes:
     - ReadWriteOnce
   volumeMode: Filesystem
   resources:
     requests:
       storage: 5Gi
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: ebs-persistent-volume
 ---
 apiVersion: apps/v1
 kind: Deployment

@@ -5,6 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ebs-persistent-volume
 spec:
+  persistentVolumeReclaimPolicy: Delete
   capacity:
     storage: 10Gi
   # If the volume is backed by a block device and the device is empty

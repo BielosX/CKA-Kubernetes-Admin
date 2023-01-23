@@ -19,10 +19,6 @@ function deploy() {
   role_arn="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-AmazonEKS_EBS_CSI_DriverRole"
   aws eks create-addon --cluster-name "eks-demo-cluster" --addon-name aws-ebs-csi-driver \
     --service-account-role-arn "$role_arn"
-  kubectl annotate serviceaccount ebs-csi-controller-sa --overwrite \
-      -n kube-system \
-      "eks.amazonaws.com/${role_arn}"
-  kubectl rollout restart deployment ebs-csi-controller -n kube-system
   popd || exit
 }
 
