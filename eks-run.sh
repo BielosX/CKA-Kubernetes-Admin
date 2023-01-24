@@ -32,7 +32,7 @@ function destroy() {
   popd || exit
 }
 
-function create_persistent_volume() {
+function create_static_persistent_volume() {
   pushd static-persistent-volume || exit
   volume=$(aws ec2 describe-volumes --filters 'Name=tag:Name,Values=eks-persistent-volume' | jq -r '.Volumes[0]')
   volume_id=$(jq -r '.VolumeId' <<< "$volume")
@@ -44,10 +44,31 @@ function create_persistent_volume() {
   popd || exit
 }
 
-function delete_persistent_volume() {
+function delete_static_persistent_volume() {
   pushd static-persistent-volume || exit
   kubectl delete -f db.yaml
   kubectl delete persistentvolume ebs-persistent-volume
+  popd || exit
+}
+
+function create_dynamic_persistent_volume() {
+  pushd dynamic-persistent-volume || exit
+  class_name="slow-ebs"
+  iops="3500"
+  throughput="200"
+  sed -e "s/{class_name}/${class_name}/g" \
+    -e "s/{iops}/${iops}/g" \
+    -e "s/{throughput}/${throughput}/g" \
+    storage-class.yaml | kubectl apply -f -
+  sed -e "s/{storage_class}/${class_name}/g" \
+    db.yaml | kubectl apply -f -
+  popd || exit
+}
+
+function delete_dynamic_persistent_volume() {
+  pushd dynamic-persistent-volume || exit
+  kubectl delete -f db.yaml
+  kubectl delete storageclass slow-ebs
   popd || exit
 }
 
@@ -55,6 +76,8 @@ case "$1" in
   "deploy") deploy ;;
   "destroy") destroy ;;
   "kubeconfig") kubeconfig ;;
-  "create-persistent-volume") create_persistent_volume ;;
-  "delete-persistent-volume") delete_persistent_volume ;;
+  "create-static-persistent-volume") create_static_persistent_volume ;;
+  "delete-static-persistent-volume") delete_static_persistent_volume ;;
+  "create-dynamic-persistent-volume") create_dynamic_persistent_volume ;;
+  "delete-dynamic-persistent-volume") delete_dynamic_persistent_volume ;;
 esac
