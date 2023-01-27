@@ -20,6 +20,9 @@ function deploy() {
   aws eks create-addon --cluster-name "eks-demo-cluster" --addon-name aws-ebs-csi-driver \
     --service-account-role-arn "$role_arn"
   popd || exit
+  export CLUSTER_NAME="eks-demo-cluster"
+  export CW_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-cloudwatch-agent-role"
+  envsubst < aws-eks-cluster/cloudwatch-agent.yaml | kubectl apply -f -
 }
 
 function destroy() {
