@@ -86,33 +86,5 @@ resource "aws_iam_openid_connect_provider" "cluster" {
 locals {
   account-id = data.aws_caller_identity.current.account_id
   region = data.aws_region.current.name
-  oicd-id = reverse(split("/", aws_eks_cluster.cluster.identity[0].oidc[0].issuer))[0]
-}
-
-data "aws_iam_policy_document" "ebs-driver-assume-role" {
-  version = "2012-10-17"
-  statement {
-    effect = "Allow"
-    principals {
-      identifiers = [aws_iam_openid_connect_provider.cluster.arn]
-      type = "Federated"
-    }
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-    condition {
-      test = "StringEquals"
-      variable = "oidc.eks.${local.region}.amazonaws.com/id/${local.oicd-id}:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-    condition {
-      test = "StringEquals"
-      values = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
-      variable = "oidc.eks.${local.region}.amazonaws.com/id/${local.oicd-id}:sub"
-    }
-  }
-}
-
-resource "aws_iam_role" "ebs-driver-role" {
-  name = "${var.cluster-name}-AmazonEKS_EBS_CSI_DriverRole"
-  assume_role_policy = data.aws_iam_policy_document.ebs-driver-assume-role.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"]
+  oidc-id = reverse(split("/", aws_eks_cluster.cluster.identity[0].oidc[0].issuer))[0]
 }
