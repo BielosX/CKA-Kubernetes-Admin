@@ -22,7 +22,15 @@ function deploy() {
   popd || exit
   export CLUSTER_NAME="eks-demo-cluster"
   export CW_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-cloudwatch-agent-role"
+  kubectl apply -f aws-eks-cluster/cloudwatch-namespace.yaml
   envsubst < aws-eks-cluster/cloudwatch-agent.yaml | kubectl apply -f -
+
+  export FLUENT_BIT_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-fluent-bit-role"
+  pushd aws-eks-cluster/fluent-bit || exit
+  envsubst < service-account.yaml | kubectl apply -f -
+  envsubst < config-map.yaml | kubectl apply -f -
+  kubectl apply -f fluent-bit.yaml
+  popd || exit
 }
 
 function destroy() {
