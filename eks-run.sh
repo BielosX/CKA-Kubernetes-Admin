@@ -11,6 +11,20 @@ function kubeconfig() {
   aws eks update-kubeconfig --region "$AWS_REGION" --name eks-demo-cluster
 }
 
+function create_fluent_bit_config_map() {
+  pushd aws-eks-cluster/fluent-bit || exit
+  kubectl create configmap fluent-bit-config \
+    -n amazon-cloudwatch \
+    --from-file=parsers.conf \
+    --from-file=host-log.conf \
+    --from-file=fluent-bit.conf \
+    --from-file=dataplane-log.conf \
+    --from-file=application-log.conf \
+    --dry-run=client -o yaml | kubectl apply -f -
+  kubectl label configmaps -n amazon-cloudwatch fluent-bit-config k8s-app=fluent-bit
+  popd || exit
+}
+
 function deploy() {
   pushd aws-eks-cluster/live || exit
   aws cloudformation deploy --template-file terraform_backend.yaml --stack-name "$BACKEND_STACK"
@@ -25,6 +39,7 @@ function deploy() {
   kubectl apply -f aws-eks-cluster/cloudwatch-namespace.yaml
   envsubst < aws-eks-cluster/cloudwatch-agent.yaml | kubectl apply -f -
 
+  create_fluent_bit_config_map
   export FLUENT_BIT_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-fluent-bit-role"
   pushd aws-eks-cluster/fluent-bit || exit
   envsubst < service-account.yaml | kubectl apply -f -
