@@ -98,6 +98,22 @@ function delete_dynamic_persistent_volume() {
   popd || exit
 }
 
+function deploy_affinity_single_aws_az() {
+  node_group=$(aws eks list-nodegroups --cluster-name eks-demo-cluster \
+    | jq -r '.nodegroups[0]')
+  subnet=$(aws eks describe-nodegroup  --cluster-name eks-demo-cluster --nodegroup-name "$node_group" \
+    | jq -r '.nodegroup.subnets[0]')
+  az=$(aws ec2 describe-subnets --subnet-ids "$subnet" | jq -r '.Subnets[0].AvailabilityZone')
+  export AWS_AZ="$az"
+  kubectl apply -f affinity-single-aws-az/config-map.yaml
+  envsubst < affinity-single-aws-az/nginx.yaml | kubectl apply -f -
+}
+
+function delete_affinity_single_aws_az() {
+  kubectl delete -f affinity-single-aws-az/nginx.yaml
+  kubectl delete -f affinity-single-aws-az/config-map.yaml
+}
+
 case "$1" in
   "deploy") deploy ;;
   "destroy") destroy ;;
@@ -106,4 +122,6 @@ case "$1" in
   "delete-static-persistent-volume") delete_static_persistent_volume ;;
   "create-dynamic-persistent-volume") create_dynamic_persistent_volume ;;
   "delete-dynamic-persistent-volume") delete_dynamic_persistent_volume ;;
+  "deploy-affinity-single-aws-az") deploy_affinity_single_aws_az ;;
+  "delete-affinity-single-aws-az") delete_affinity_single_aws_az ;;
 esac

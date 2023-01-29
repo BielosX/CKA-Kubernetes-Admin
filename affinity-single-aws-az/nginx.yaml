@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-nginx
+spec:
+  selector:
+    matchLabels:
+      name: demo-nginx
+  template:
+    metadata:
+      labels:
+        name: demo-nginx
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - "${AWS_AZ}"
+      volumes:
+        - name: nginx-init-script
+          configMap:
+            defaultMode: 511 # rwx
+            name: nginx-init-script
+      containers:
+        - name: nginx
+          image: nginx:1.23.0-alpine
+          # By default, ConfigMap content is mounted as symlink, as docker-entrypoint.sh runs only regular files
+          # the init.sh script would not be executed. To solve this issue the volume needs to be mounted
+          # with subPath provided and mountPath pointing to actual file (not directory), that configured
+          # volume WILL NOT BE updated on ConfigMap change.
+          volumeMounts:
+            - mountPath: /docker-entrypoint.d/init.sh
+              name: nginx-init-script
+              subPath: init.sh
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: NodePort
+  selector:
+    name: demo-nginx
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-service
+                port:
+                  number: 8080

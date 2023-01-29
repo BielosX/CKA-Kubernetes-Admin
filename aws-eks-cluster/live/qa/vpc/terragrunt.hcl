@@ -14,10 +14,12 @@ locals {
 inputs = {
   cidr = "10.0.0.0/16"
   public-subnets-tags = {
-    "kubernetes.io/cluster/${local.cluster-name}": "shared"
+    "kubernetes.io/cluster/${local.cluster-name}": "shared",
+    "kubernetes.io/role/elb": 1
   }
   private-subnets-tags = {
-    "kubernetes.io/cluster/${local.cluster-name}": "shared"
+    "kubernetes.io/cluster/${local.cluster-name}": "shared",
+    "kubernetes.io/role/internal-elb": 1
   }
   public-subnets = 2
   private-subnets = 2
