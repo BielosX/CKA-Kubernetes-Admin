@@ -114,6 +114,20 @@ function delete_affinity_single_aws_az() {
   kubectl delete -f affinity-single-aws-az/config-map.yaml
 }
 
+function deploy_aws_az_spread() {
+  pushd aws-az-spread || exit
+  kubectl apply -f config-map.yaml
+  kubectl apply -f nginx.yaml
+  popd || exit
+}
+
+function delete_aws_az_spread() {
+  pushd aws-az-spread || exit
+  kubectl delete -f nginx.yaml
+  kubectl delete -f config-map.yaml
+  popd || exit
+}
+
 case "$1" in
   "deploy") deploy ;;
   "destroy") destroy ;;
@@ -124,4 +138,6 @@ case "$1" in
   "delete-dynamic-persistent-volume") delete_dynamic_persistent_volume ;;
   "deploy-affinity-single-aws-az") deploy_affinity_single_aws_az ;;
   "delete-affinity-single-aws-az") delete_affinity_single_aws_az ;;
+  "deploy-aws-az-spread") deploy_aws_az_spread ;;
+  "delete-aws-az-spread") delete_aws_az_spread ;;
 esac

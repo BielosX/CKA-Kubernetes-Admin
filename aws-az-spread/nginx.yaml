@@ -12,31 +12,37 @@ spec:
       labels:
         name: demo-nginx
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: topology.kubernetes.io/zone
-                    operator: In
-                    values:
-                      - "${AWS_AZ}"
+      # https://aws.github.io/aws-eks-best-practices/reliability/docs/dataplane/#spread-worker-nodes-and-workload-across-multiple-azs
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
       volumes:
         - name: nginx-init-script
           configMap:
-            defaultMode: 511 # rwx
             name: nginx-init-script
+            defaultMode: 511 # 777 oct
+        - name: nginx-html
+          emptyDir:
+            sizeLimit: 50Mi
+      initContainers:
+        - name: init-script
+          image: alpine:3.17
+          volumeMounts:
+            - mountPath: /opt/init-script
+              name: nginx-init-script
+            - mountPath: /usr/share/nginx/html
+              name: nginx-html
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "apk add --no-cache bash && /bin/bash /opt/init-script/init.sh"
       containers:
         - name: nginx
           image: nginx:1.23.0-alpine
-          # By default, ConfigMap content is mounted as symlink, as docker-entrypoint.sh runs only regular files
-          # the init.sh script would not be executed. To solve this issue the volume needs to be mounted
-          # with subPath provided and mountPath pointing to actual file (not directory), that configured
-          # volume WILL NOT BE updated on ConfigMap change.
           volumeMounts:
-            - mountPath: /docker-entrypoint.d/init.sh
-              name: nginx-init-script
-              subPath: init.sh
+            - mountPath: /usr/share/nginx/html
+              name: nginx-html
           ports:
             - containerPort: 80
 ---
