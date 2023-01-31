@@ -25,6 +25,18 @@ function create_fluent_bit_config_map() {
   popd || exit
 }
 
+function install_alb_controller() {
+  export ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-alb-controller-role"
+  envsubst < aws-eks-cluster/alb-service-account.yaml | kubectl apply -f -
+  helm repo add eks https://aws.github.io/eks-charts
+  helm repo update
+  helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+    -n kube-system \
+    --set clusterName="eks-demo-cluster" \
+    --set serviceAccount.create=false \
+    --set serviceAccount.name=aws-load-balancer-controller
+}
+
 function deploy() {
   pushd aws-eks-cluster/live || exit
   aws cloudformation deploy --template-file terraform_backend.yaml --stack-name "$BACKEND_STACK"
@@ -46,6 +58,8 @@ function deploy() {
   envsubst < config-map.yaml | kubectl apply -f -
   kubectl apply -f fluent-bit.yaml
   popd || exit
+
+  install_alb_controller
 }
 
 function destroy() {

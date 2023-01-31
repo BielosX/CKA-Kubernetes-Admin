@@ -39,3 +39,20 @@ resource "aws_iam_role" "fluent-bit-role" {
   assume_role_policy = module.fluent-bit-assume-role.json
   managed_policy_arns = ["arn:aws:iam::aws:policy/CloudWatchFullAccess"]
 }
+
+module "alb-controller-assume-role" {
+  source = "../sa-assume-role-policy"
+  namespace = "kube-system"
+  service-account = "aws-load-balancer-controller"
+  oidc-arn = var.oidc-arn
+  oidc-id = var.oidc-id
+}
+
+resource "aws_iam_role" "alb-controller-role" {
+  assume_role_policy = module.alb-controller-assume-role.json
+  name = "${var.cluster-name}-alb-controller-role"
+  inline_policy {
+    name = "alb-controller-policy"
+    policy = file("${path.module}/alb_iam_policy.json")
+  }
+}
