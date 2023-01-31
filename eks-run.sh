@@ -63,6 +63,7 @@ function deploy() {
 }
 
 function destroy() {
+  echo "All resources created by EKS addons should be removed before Terraform destroy"
   pushd aws-eks-cluster/live || exit
   terragrunt run-all destroy --terragrunt-working-dir qa --terragrunt-non-interactive || exit
   BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name "$BACKEND_STACK" | jq -r '.Stacks[0].Outputs[0].OutputValue')
