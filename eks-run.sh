@@ -41,6 +41,18 @@ function install_alb_controller() {
     --set serviceAccount.name=aws-load-balancer-controller
 }
 
+function delete_all_k8s_resources() {
+  namespaces=$(kubectl get namespaces -o json | jq -r '.items | map(.metadata.name) | .[]')
+  while IFS= read -r namespace; do
+    if [[ "$namespace" =~ ^kube.* ]]; then
+      echo "Skipping namespace ${namespace}"
+    else
+      echo "Deleting all resources in ${namespace}"
+      kubectl delete all --all -n "$namespace"
+    fi
+  done <<< "$namespaces"
+}
+
 function deploy() {
   clean_terragrunt_cache
 
@@ -69,7 +81,8 @@ function deploy() {
 }
 
 function destroy() {
-  echo "All resources created by EKS addons should be removed before Terraform destroy"
+  delete_all_k8s_resources
+
   pushd aws-eks-cluster/live || exit
   terragrunt run-all destroy --terragrunt-working-dir qa --terragrunt-non-interactive || exit
   BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name "$BACKEND_STACK" | jq -r '.Stacks[0].Outputs[0].OutputValue')
@@ -151,6 +164,7 @@ function delete_aws_az_spread() {
 
 case "$1" in
   "clean-terragrunt-cache") clean_terragrunt_cache ;;
+  "delete-all-k8s-resources") delete_all_k8s_resources ;;
   "deploy") deploy ;;
   "destroy") destroy ;;
   "kubeconfig") kubeconfig ;;
