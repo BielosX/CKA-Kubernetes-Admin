@@ -8,6 +8,9 @@ terraform {
 
 dependency "vpc" {
   config_path = "../vpc"
+  mock_outputs = {
+    private-subnets-azs = []
+  }
 }
 
 inputs = {

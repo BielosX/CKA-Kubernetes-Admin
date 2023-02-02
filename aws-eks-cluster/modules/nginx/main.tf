@@ -27,7 +27,7 @@ module "amzn_linux2_instance" {
   security-group-ids = [aws_security_group.security-group.id]
   subnet-id = var.subnet-id
   user-data = file("${path.module}/init.sh")
-  eip = true
+  eip = false
 }
 
 locals {
@@ -46,5 +46,5 @@ resource "aws_route53_record" "nginx-record" {
   type = "A"
   zone_id = aws_route53_zone.private-hosted-zone.id
   ttl = 60
-  records = [module.amzn_linux2_instance.eip-private-ip]
+  records = [module.amzn_linux2_instance.private-ip]
 }
