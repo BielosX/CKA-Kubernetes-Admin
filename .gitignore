@@ -2,3 +2,4 @@
 .vagrant
 .terragrunt-cache
 .terraform.lock.hcl
+.terraform

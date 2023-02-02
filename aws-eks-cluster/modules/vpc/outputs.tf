@@ -13,3 +13,7 @@ output "private-subnets-azs" {
 output "public-subnets-azs" {
   value = aws_subnet.pubic-subnet[*].availability_zone
 }
+
+output "vpc-id" {
+  value = aws_vpc.vpc.id
+}

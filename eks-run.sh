@@ -162,6 +162,26 @@ function delete_aws_az_spread() {
   popd || exit
 }
 
+function create_pod_dns() {
+  pushd pod-dns || exit
+  hosted_zone_id=$(aws route53 list-hosted-zones-by-name --dns-name "bielosx.example.com" \
+    | jq -r '.HostedZones[0].Id')
+  dns_addr=$(aws route53 list-resource-record-sets --hosted-zone-id "$hosted_zone_id" \
+    | jq -r '.ResourceRecordSets[] | select(.Type == "NS") | .ResourceRecords[0].Value')
+  dns_ip=$(dig +short "$dns_addr" | tail -n1)
+  kubectl apply -f nginx-config-map.yaml
+  export ROUTE_53_DNS="$dns_ip"
+  envsubst < config.yaml | kubectl apply -f -
+  popd || exit
+}
+
+function delete_pod_dns() {
+  pushd pod-dns || exit
+  kubectl delete -f config.yaml
+  kubectl delete -f nginx-config-map.yaml
+  popd || exit
+}
+
 case "$1" in
   "clean-terragrunt-cache") clean_terragrunt_cache ;;
   "delete-all-k8s-resources") delete_all_k8s_resources ;;
@@ -176,4 +196,6 @@ case "$1" in
   "delete-affinity-single-aws-az") delete_affinity_single_aws_az ;;
   "deploy-aws-az-spread") deploy_aws_az_spread ;;
   "delete-aws-az-spread") delete_aws_az_spread ;;
+  "create-pod-dns") create_pod_dns ;;
+  "delete-pod-dns") delete_pod_dns ;;
 esac
