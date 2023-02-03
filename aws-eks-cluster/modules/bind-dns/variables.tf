@@ -5,7 +5,3 @@ variable "vpc-id" {
 variable "subnet-id" {
   type = string
 }
-
-variable "private-ip" {
-  type = string
-}

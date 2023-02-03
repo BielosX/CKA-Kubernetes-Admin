@@ -16,6 +16,13 @@ module "vpc" {
   }
 }
 
+module "nginx" {
+  source = "./modules/nginx"
+  subnet-id = module.vpc.private-subnet-ids[0]
+  vpc-id = module.vpc.vpc-id
+  private-ip = cidrhost(module.vpc.private-subnets-cidrs[0], 53)
+}
+
 module "ebs" {
   source = "./modules/ebs"
   availability-zone = module.vpc.private-subnets-azs[0]
@@ -23,6 +30,7 @@ module "ebs" {
 }
 
 module "eks" {
+  depends_on = [module.nginx]
   source = "./modules/eks"
   cluster-name = var.cluster-name
   max-size = 4
@@ -37,8 +45,9 @@ module "iam" {
   oidc-id = module.eks.oidc-id
 }
 
-module "nginx" {
-  source = "./modules/nginx"
+module "bind-dns" {
+  depends_on = [module.nginx]
+  source = "./modules/bind-dns"
   subnet-id = module.vpc.private-subnet-ids[0]
   vpc-id = module.vpc.vpc-id
 }

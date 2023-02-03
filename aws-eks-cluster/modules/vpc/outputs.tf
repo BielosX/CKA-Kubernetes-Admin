@@ -17,3 +17,11 @@ output "public-subnets-azs" {
 output "vpc-id" {
   value = aws_vpc.vpc.id
 }
+
+output "private-subnets-cidrs" {
+  value = aws_subnet.private-subnet[*].cidr_block
+}
+
+output "public-subnets-cidrs" {
+  value = aws_subnet.pubic-subnet[*].cidr_block
+}

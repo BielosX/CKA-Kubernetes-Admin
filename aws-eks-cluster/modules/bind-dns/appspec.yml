@@ -1,0 +1,11 @@
+version: 0.0
+os: linux
+files:
+  - source: configs/named.conf
+    destination: /etc/named.conf
+  - source: configs/zones
+    destination: /var/named
+hooks:
+  AfterInstall:
+    - location: scripts/restart-named.sh
+      timeout: 180
