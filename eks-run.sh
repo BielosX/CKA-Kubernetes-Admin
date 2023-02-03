@@ -6,10 +6,6 @@ export AWS_REGION="eu-west-1"
 ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
 export AWS_PAGER=""
 
-function clean_terragrunt_cache() {
-   find . -type d -name ".terragrunt-cache" -prune -exec rm -rf {} \;
-}
-
 function kubeconfig() {
   rm ~/.kube/config
   aws eks update-kubeconfig --region "$AWS_REGION" --name eks-demo-cluster
@@ -54,16 +50,22 @@ function delete_all_k8s_resources() {
 }
 
 function deploy() {
-  clean_terragrunt_cache
-
   pushd aws-eks-cluster/live || exit
   aws cloudformation deploy --template-file terraform_backend.yaml --stack-name "$BACKEND_STACK"
-  terragrunt run-all apply --terragrunt-working-dir qa --terragrunt-non-interactive || exit
+  bucket_name="eks-cluster-${AWS_REGION}-${ACCOUNT_ID}"
+
+  pushd qa || exit
+  terraform init \
+    -backend-config="bucket=${bucket_name}" || exit
+  terraform apply -auto-approve || exit
+  popd || exit
+
   kubeconfig
   role_arn="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-AmazonEKS_EBS_CSI_DriverRole"
   aws eks create-addon --cluster-name "eks-demo-cluster" --addon-name aws-ebs-csi-driver \
     --service-account-role-arn "$role_arn"
   popd || exit
+
   export CLUSTER_NAME="eks-demo-cluster"
   export CW_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-cloudwatch-agent-role"
   kubectl apply -f aws-eks-cluster/cloudwatch-namespace.yaml
@@ -83,8 +85,8 @@ function deploy() {
 function destroy() {
   delete_all_k8s_resources
 
-  pushd aws-eks-cluster/live || exit
-  terragrunt run-all destroy --terragrunt-working-dir qa --terragrunt-non-interactive || exit
+  pushd aws-eks-cluster/live/qa || exit
+  terraform destroy -auto-approve || exit
   BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name "$BACKEND_STACK" | jq -r '.Stacks[0].Outputs[0].OutputValue')
   aws s3 rm --recursive "s3://$BUCKET_NAME"
   aws cloudformation delete-stack --stack-name "$BACKEND_STACK"
