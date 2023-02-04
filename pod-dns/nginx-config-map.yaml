@@ -38,7 +38,7 @@ data:
           server_name  localhost;
           
           location / {
-              proxy_pass   http://nginx.bielosx.example.com;
+              proxy_pass   http://nginx.bielosx.com;
           }
         }
     }

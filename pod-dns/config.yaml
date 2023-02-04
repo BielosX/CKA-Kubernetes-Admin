@@ -18,7 +18,7 @@ spec:
       dnsPolicy: ClusterFirst
       dnsConfig:
         nameservers:
-          - "${ROUTE_53_DNS}" # Only IP address is allowed. Don't use for Route53, use ExternalDNS
+          - "10.0.3.54"
       containers:
         - name: nginx
           image: nginx:1.23.0-alpine

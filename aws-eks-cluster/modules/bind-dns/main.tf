@@ -35,6 +35,13 @@ module "amzn_linux2_instance" {
   name = "bind-dns"
   security-group-ids = [aws_security_group.bind-sg.id]
   subnet-id = var.subnet-id
+  private-ip = var.private-ip
+  managed-policy-arns = [
+    "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess",
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  ]
   user-data = templatefile("${path.module}/init.sh", {
     cw_config_param: aws_ssm_parameter.cloudwatch-agent-config.id
   })
@@ -85,4 +92,17 @@ resource "aws_codedeploy_deployment_group" "bind-dns-deployment-group" {
       value = "bind-dns"
     }
   }
+}
+
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+locals {
+  region = data.aws_region.current.name
+  account-id = data.aws_caller_identity.current.account_id
+}
+
+module "deployment-bucket" {
+  source = "git::https://github.com/BielosX/AWS-SysOps.git//private_bucket"
+  bucket-name = "bind-dns-config-${local.region}-${local.account-id}"
 }

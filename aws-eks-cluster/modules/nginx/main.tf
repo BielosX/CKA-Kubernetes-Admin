@@ -27,6 +27,7 @@ module "amzn_linux2_instance" {
   security-group-ids = [aws_security_group.security-group.id]
   subnet-id = var.subnet-id
   user-data = file("${path.module}/init.sh")
+  private-ip = var.private-ip
   eip = false
 }
 
