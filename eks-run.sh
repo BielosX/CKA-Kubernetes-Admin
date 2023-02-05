@@ -6,6 +6,10 @@ export AWS_REGION="eu-west-1"
 ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
 export AWS_PAGER=""
 
+function remove_terraform_cache() {
+  find . -type d -name '.terraform' -prune -exec rm -rf {} \;
+}
+
 function get_all_k8s_managed_alb() {
  alb=$(kubectl get ingress --all-namespaces -o json \
   | jq -r '.items | map(.status.loadBalancer.ingress) | flatten | map(.hostname)')
@@ -127,6 +131,8 @@ function delete_all_k8s_resources() {
 }
 
 function deploy() {
+  remove_terraform_cache
+
   pushd aws-eks-cluster/live || exit
   aws cloudformation deploy --template-file terraform_backend.yaml --stack-name "$BACKEND_STACK"
   bucket_name="eks-cluster-${AWS_REGION}-${ACCOUNT_ID}"
