@@ -30,22 +30,3 @@ module "amzn_linux2_instance" {
   private-ip = var.private-ip
   eip = false
 }
-
-locals {
-  zone-name = "bielosx.example.com"
-}
-
-resource "aws_route53_zone" "private-hosted-zone" {
-  name = local.zone-name
-  vpc {
-    vpc_id = var.vpc-id
-  }
-}
-
-resource "aws_route53_record" "nginx-record" {
-  name = "nginx.${local.zone-name}"
-  type = "A"
-  zone_id = aws_route53_zone.private-hosted-zone.id
-  ttl = 60
-  records = [module.amzn_linux2_instance.private-ip]
-}
