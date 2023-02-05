@@ -112,6 +112,8 @@ function delete_all_k8s_resources() {
       kubectl delete all --all -n "$namespace"
     fi
   done <<< "$namespaces"
+  # For some reason kubectl delete all doesn't touch ingress (at least these with AWS ALB)
+  # It needs to be removed separately
   ingress=$(kubectl get ingress --all-namespaces -o json \
     | jq -r '.items | map({ "name": (.metadata.name), namespace: (.metadata.namespace) })')
   ingress_len=$(jq -r 'length' <<< "$ingress")
