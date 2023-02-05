@@ -6,6 +6,33 @@ export AWS_REGION="eu-west-1"
 ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
 export AWS_PAGER=""
 
+function get_all_k8s_managed_alb() {
+ alb=$(kubectl get ingress --all-namespaces -o json \
+  | jq -r '.items | map(.status.loadBalancer.ingress) | flatten | map(.hostname)')
+}
+
+function wait_for_alb_destroy() {
+  albDnsToArn=$(aws elbv2 describe-load-balancers \
+    | jq -r '.LoadBalancers | map ( { (.DNSName): (.LoadBalancerArn) } ) | add')
+  len=$(jq -r 'length' <<< "$1")
+  counter=0
+  while (( counter < len )); do
+    for ((i=0;i<len;i++)); do
+      alb_hostname=$(jq -r ".[$i]" <<< "$1")
+      alb_arn=$(jq -r ".[\"${alb_hostname}\"]" <<< "$albDnsToArn")
+      if [ "$alb_arn" != "" ]; then
+        if aws elbv2 describe-load-balancers --load-balancer-arns "$alb_arn" > /dev/null 2>&1 ; then
+          echo "ALB ${alb_hostname} still exists. Waiting"
+        else
+          echo "ALB ${alb_hostname} removed."
+          counter=$((counter+1))
+        fi
+      fi
+    done
+    sleep 10
+  done
+}
+
 function create_bind_dns_package() {
   pushd aws-eks-cluster/modules/bind-dns || exit
   rm -f package.zip
@@ -85,6 +112,16 @@ function delete_all_k8s_resources() {
       kubectl delete all --all -n "$namespace"
     fi
   done <<< "$namespaces"
+  ingress=$(kubectl get ingress --all-namespaces -o json \
+    | jq -r '.items | map({ "name": (.metadata.name), namespace: (.metadata.namespace) })')
+  ingress_len=$(jq -r 'length' <<< "$ingress")
+  for ((i=0;i<ingress_len;i++)); do
+    ingress_item=$(jq -r ".[$i]" <<< "$ingress")
+    ingress_name=$(jq -r '.name' <<< "$ingress_item")
+    ingress_namespace=$(jq -r '.namespace' <<< "$ingress_item")
+    echo "Deleting ${ingress_name} from namespace ${ingress_namespace}"
+    kubectl delete ingress "$ingress_name" -n "$ingress_namespace"
+  done
 }
 
 function deploy() {
@@ -121,7 +158,9 @@ function deploy() {
 }
 
 function destroy() {
+  get_all_k8s_managed_alb
   delete_all_k8s_resources
+  wait_for_alb_destroy "$alb"
 
   pushd aws-eks-cluster/live/qa || exit
   terraform destroy -auto-approve || exit
