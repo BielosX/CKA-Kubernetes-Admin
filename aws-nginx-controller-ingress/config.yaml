@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-deployment
+spec:
+  selector:
+    matchLabels:
+      name: hello
+  template:
+    metadata:
+      labels:
+        name: hello
+    spec:
+      volumes:
+        - name: scripts
+          configMap:
+            name: "${CONFIG_MAP_NAME}"
+            defaultMode: 511 # 777 oct
+      containers:
+        - name: hello
+          image: python:3.11-alpine
+          ports:
+            - containerPort: 8080
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "pip install -r /opt/requirements.txt && gunicorn --bind 0.0.0.0:8080 main:app --chdir /opt"
+          startupProbe:
+            periodSeconds: 10
+            failureThreshold: 5
+            httpGet:
+              path: /hello
+              port: 8080
+          livenessProbe:
+            periodSeconds: 10
+            httpGet:
+              path: /hello
+              port: 8080
+          readinessProbe:
+            periodSeconds: 10
+            httpGet:
+              path: /hello
+              port: 8080
+          volumeMounts:
+            - mountPath: /opt/main.py
+              name: scripts
+              subPath: main.py
+            - mountPath: /opt/requirements.txt
+              name: scripts
+              subPath: requirements.txt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-service
+spec:
+  type: ClusterIP
+  selector:
+    name: hello
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /api/v1/(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: hello-service
+                port:
+                  number: 80

@@ -43,16 +43,16 @@ resource "aws_iam_role" "fluent-bit-role" {
 module "alb-controller-assume-role" {
   source = "../sa-assume-role-policy"
   namespace = "kube-system"
-  service-account = "aws-load-balancer-controller"
+  service-account = "load-balancer-controller"
   oidc-arn = var.oidc-arn
   oidc-id = var.oidc-id
 }
 
-resource "aws_iam_role" "alb-controller-role" {
+resource "aws_iam_role" "load-balancer-controller-role" {
   assume_role_policy = module.alb-controller-assume-role.json
-  name = "${var.cluster-name}-alb-controller-role"
+  name = "${var.cluster-name}-load-balancer-controller-role"
   inline_policy {
     name = "alb-controller-policy"
-    policy = file("${path.module}/alb_iam_policy.json")
+    policy = file("${path.module}/load_balancer_controller_iam_policy.json")
   }
 }

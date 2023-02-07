@@ -6,6 +6,17 @@ export AWS_REGION="eu-west-1"
 ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
 export AWS_PAGER=""
 
+function install_nginx_controller() {
+  helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+  helm repo update
+  helm upgrade -i ingress-nginx ingress-nginx/ingress-nginx \
+    --namespace kube-system \
+    --set controller.service.type=LoadBalancer \
+    --set clusterName="eks-demo-cluster" \
+    --set serviceAccount.create=false \
+    --set serviceAccount.name=aws-load-balancer-controller
+}
+
 function remove_terraform_cache() {
   find . -type d -name '.terraform' -prune -exec rm -rf {} \;
 }
@@ -94,12 +105,15 @@ function create_fluent_bit_config_map() {
   popd || exit
 }
 
+function create_aws_load_balancer_controller_sa() {
+  export ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-load-balancer-controller-role"
+  envsubst < aws-eks-cluster/aws-load-balancer-controller.yaml | kubectl apply -f -
+}
+
 function install_alb_controller() {
-  export ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-alb-controller-role"
-  envsubst < aws-eks-cluster/alb-service-account.yaml | kubectl apply -f -
   helm repo add eks https://aws.github.io/eks-charts
   helm repo update
-  helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
     -n kube-system \
     --set clusterName="eks-demo-cluster" \
     --set serviceAccount.create=false \
@@ -162,7 +176,9 @@ function deploy() {
   kubectl apply -f fluent-bit.yaml
   popd || exit
 
+  create_aws_load_balancer_controller_sa
   install_alb_controller
+  install_nginx_controller
 }
 
 function destroy() {
@@ -269,6 +285,25 @@ function delete_pod_dns() {
   popd || exit
 }
 
+function deploy_aws_nginx_controller_ingress() {
+  pushd aws-nginx-controller-ingress || exit
+  config_map="hello-scripts"
+  kubectl create configmap "$config_map" \
+    --from-file=main.py \
+    --from-file=requirements.txt \
+    --dry-run=client -o yaml | kubectl apply -f -
+  export CONFIG_MAP_NAME="$config_map"
+  envsubst < config.yaml | kubectl apply -f -
+  popd || exit
+}
+
+function delete_aws_nginx_controller_ingress() {
+  pushd aws-nginx-controller-ingress || exit
+  kubectl delete -f config.yaml
+  kubectl delete configmap hello-scripts
+  popd || exit
+}
+
 case "$1" in
   "bind-dns-package") create_bind_dns_package ;;
   "deploy-bind-dns-config") deploy_bind_dns_config ;;
@@ -287,4 +322,6 @@ case "$1" in
   "delete-aws-az-spread") delete_aws_az_spread ;;
   "create-pod-dns") create_pod_dns ;;
   "delete-pod-dns") delete_pod_dns ;;
+  "deploy-aws-nginx-controller-ingress") deploy_aws_nginx_controller_ingress ;;
+  "delete-aws-nginx-controller-ingress") delete_aws_nginx_controller_ingress ;;
 esac
