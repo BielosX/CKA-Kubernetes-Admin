@@ -187,7 +187,7 @@ function destroy() {
   get_all_k8s_managed_alb
   delete_all_k8s_resources
   wait_for_alb_destroy "$alb"
-  helm uninstall ingress-nginx
+  helm uninstall ingress-nginx -n kube-system
 
   pushd aws-eks-cluster/live/qa || exit
   terraform destroy -auto-approve || exit
