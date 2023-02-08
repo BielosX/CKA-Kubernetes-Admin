@@ -14,7 +14,9 @@ function install_nginx_controller() {
     --set controller.service.type=LoadBalancer \
     --set clusterName="eks-demo-cluster" \
     --set serviceAccount.create=false \
-    --set serviceAccount.name=aws-load-balancer-controller
+    --set serviceAccount.name=aws-load-balancer-controller \
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"="nlb" \
+    --set controller.ingressClassResource.default=true
 }
 
 function remove_terraform_cache() {
@@ -185,6 +187,7 @@ function destroy() {
   get_all_k8s_managed_alb
   delete_all_k8s_resources
   wait_for_alb_destroy "$alb"
+  helm uninstall ingress-nginx
 
   pushd aws-eks-cluster/live/qa || exit
   terraform destroy -auto-approve || exit
