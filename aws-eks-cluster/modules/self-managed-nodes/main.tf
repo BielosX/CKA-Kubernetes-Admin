@@ -25,6 +25,7 @@ locals {
 }
 
 resource "aws_iam_role" "instance-role" {
+  name = "${var.cluster-name}-self-managed-node-role"
   assume_role_policy = data.aws_iam_policy_document.ec2-assume-role.json
 }
 
@@ -97,6 +98,7 @@ resource "aws_launch_template" "launch-template" {
   vpc_security_group_ids = [aws_security_group.instance-sg.id]
   user_data = base64encode(templatefile("${path.module}/init.sh", {
     cw_config_param: aws_ssm_parameter.cloud-watch-agent-config.id
+    cluster_name: var.cluster-name
   }))
   iam_instance_profile {
     arn = aws_iam_instance_profile.instance-profile.arn

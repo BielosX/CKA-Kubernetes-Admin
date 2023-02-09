@@ -165,6 +165,10 @@ function deploy() {
     --service-account-role-arn "$role_arn"
   popd || exit
 
+  self_managed_node_role_arn="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-self-managed-node-role"
+  export ROLE_ARN="$self_managed_node_role_arn"
+  envsubst < aws-eks-cluster/aws-auth-cm.yaml | kubectl apply -f -
+
   export CLUSTER_NAME="eks-demo-cluster"
   export CW_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-cloudwatch-agent-role"
   kubectl apply -f aws-eks-cluster/cloudwatch-namespace.yaml
