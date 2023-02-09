@@ -325,7 +325,6 @@ function delete_aws_nginx_controller_ingress() {
 case "$1" in
   "bind-dns-package") create_bind_dns_package ;;
   "deploy-bind-dns-config") deploy_bind_dns_config ;;
-  "clean-terragrunt-cache") clean_terragrunt_cache ;;
   "delete-all-k8s-resources") delete_all_k8s_resources ;;
   "deploy") deploy ;;
   "destroy") destroy ;;
