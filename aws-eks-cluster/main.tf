@@ -65,3 +65,9 @@ module "self-managed-nodes" {
   vpc-id = module.vpc.vpc-id
   cluster-security-group-id = module.eks.cluster-security-group-id
 }
+
+module "control-plane-sg-rules" {
+  source = "./modules/control-plane-sg-rules"
+  cluster-security-group-id = module.eks.cluster-security-group-id
+  self-managed-nodes-security-group-id = module.self-managed-nodes.security-group-id
+}

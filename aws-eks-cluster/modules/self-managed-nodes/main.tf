@@ -64,41 +64,13 @@ resource "aws_security_group_rule" "node-communication" {
 }
 
 resource "aws_security_group_rule" "https-outbound" {
-  description = "Allow note to download packages"
+  description = "Allow node to download packages"
   type = "egress"
   cidr_blocks = ["0.0.0.0/0"]
-  protocol = "-1" // TCP would be enough. Workaround for Terraform issue
+  protocol = "tcp"
   from_port = 443
   to_port = 443
   security_group_id = aws_security_group.instance-sg.id
-}
-
-resource "aws_security_group_rule" "api-server-inbound" {
-  type = "ingress"
-  protocol = "tcp"
-  from_port = 443
-  to_port = 443
-  source_security_group_id = aws_security_group.instance-sg.id
-  security_group_id = var.cluster-security-group-id
-}
-
-resource "aws_security_group_rule" "control-plane-outbound" {
-  type = "egress"
-  protocol = "tcp"
-  from_port = 1025
-  to_port = 65535
-  source_security_group_id = aws_security_group.instance-sg.id
-  security_group_id = var.cluster-security-group-id
-}
-
-resource "aws_security_group_rule" "control-plane-extension-api-server-outbound" {
-  description = "Allow control plane to communicate with extension api server"
-  type = "egress"
-  protocol = "tcp"
-  from_port = 443
-  to_port = 443
-  source_security_group_id = aws_security_group.instance-sg.id
-  security_group_id = var.cluster-security-group-id
 }
 
 resource "aws_security_group_rule" "node-inbound" {
@@ -115,8 +87,8 @@ resource "aws_security_group_rule" "extension-api-server-inbound" {
   protocol = "tcp"
   from_port = 443
   to_port = 443
-  security_group_id = aws_security_group.instance-sg.id
   source_security_group_id = var.cluster-security-group-id
+  security_group_id = aws_security_group.instance-sg.id
 }
 
 resource "aws_launch_template" "launch-template" {
