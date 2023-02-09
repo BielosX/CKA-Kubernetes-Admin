@@ -106,6 +106,7 @@ resource "aws_launch_template" "launch-template" {
 }
 
 resource "aws_autoscaling_group" "node-group" {
+  name = var.name
   max_size = var.max-size
   min_size = var.min-size
   vpc_zone_identifier = var.subnet-ids

@@ -185,6 +185,17 @@ function deploy() {
   create_aws_load_balancer_controller_sa
   install_alb_controller
   install_nginx_controller
+
+read -r -d '' refresh_config << EOM
+{
+  "MinHealthyPercentage": 0
+}
+EOM
+
+  aws autoscaling start-instance-refresh \
+    --auto-scaling-group-name "self-managed-nodes" \
+    --strategy "Rolling" \
+    --preferences "$refresh_config"
 }
 
 function destroy() {
