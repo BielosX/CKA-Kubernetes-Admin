@@ -9,3 +9,7 @@ output "oidc-arn" {
 output "oidc-id" {
   value = local.oidc-id
 }
+
+output "cluster-security-group-id" {
+  value = aws_eks_cluster.cluster.vpc_config[0].cluster_security_group_id
+}

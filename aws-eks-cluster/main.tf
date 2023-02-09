@@ -52,3 +52,16 @@ module "iam" {
   oidc-arn = module.eks.oidc-arn
   oidc-id = module.eks.oidc-id
 }
+
+module "self-managed-nodes" {
+  source = "./modules/self-managed-nodes"
+  cluster-name = module.eks.cluster-name
+  kubernetes-version = "1.24"
+  max-size = 4
+  min-size = 2
+  name = "self-managed-nodes"
+  subnet-ids = module.vpc.private-subnet-ids
+  instance-type = "t3.medium"
+  vpc-id = module.vpc.vpc-id
+  cluster-security-group-id = module.eks.cluster-security-group-id
+}
