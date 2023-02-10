@@ -64,6 +64,16 @@ module "self-managed-nodes" {
   instance-type = "t3.medium"
   vpc-id = module.vpc.vpc-id
   cluster-security-group-id = module.eks.cluster-security-group-id
+  labels = {
+    nodeType: "self-managed"
+  }
+  taints = [
+    {
+      key: "nodeType",
+      value: "self-managed",
+      effect: "NoSchedule"
+    }
+  ]
 }
 
 module "control-plane-sg-rules" {

@@ -38,3 +38,13 @@ variable "vpc-id" {
 variable "cluster-security-group-id" {
   type = string
 }
+
+variable "labels" {
+  type = map(string)
+  default = {}
+}
+
+variable "taints" {
+  type = list(object({key=string, value=string, effect=string}))
+  default = []
+}

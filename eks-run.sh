@@ -166,7 +166,9 @@ function deploy() {
   popd || exit
 
   self_managed_node_role_arn="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-self-managed-node-role"
-  export ROLE_ARN="$self_managed_node_role_arn"
+  aws_managed_role_arn="arn:aws:iam::${ACCOUNT_ID}:role/eks-demo-cluster-node-role"
+  export SELF_MANAGED_ROLE_ARN="$self_managed_node_role_arn"
+  export AWS_MANAGED_ROLE_ARN="$aws_managed_role_arn"
   envsubst < aws-eks-cluster/aws-auth-cm.yaml | kubectl apply -f -
 
   export CLUSTER_NAME="eks-demo-cluster"
@@ -322,6 +324,14 @@ function delete_aws_nginx_controller_ingress() {
   popd || exit
 }
 
+function deploy_taint_tolerations() {
+  kubectl apply -f taint-tolerations/deployment.yaml
+}
+
+function delete_taint_tolerations() {
+  kubectl delete -f taint-tolerations/deployment.yaml
+}
+
 case "$1" in
   "bind-dns-package") create_bind_dns_package ;;
   "deploy-bind-dns-config") deploy_bind_dns_config ;;
@@ -341,4 +351,6 @@ case "$1" in
   "delete-pod-dns") delete_pod_dns ;;
   "deploy-aws-nginx-controller-ingress") deploy_aws_nginx_controller_ingress ;;
   "delete-aws-nginx-controller-ingress") delete_aws_nginx_controller_ingress ;;
+  "deploy-taint-tolerations") deploy_taint_tolerations ;;
+  "delete-taint-tolerations") delete_taint_tolerations ;;
 esac

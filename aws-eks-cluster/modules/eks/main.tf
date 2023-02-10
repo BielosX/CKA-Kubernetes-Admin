@@ -37,6 +37,7 @@ data "aws_iam_policy_document" "node-role-assume-policy" {
 }
 
 resource "aws_iam_role" "node-role" {
+  name = "${var.cluster-name}-node-role"
   assume_role_policy = data.aws_iam_policy_document.node-role-assume-policy.json
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",

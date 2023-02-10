@@ -5,7 +5,12 @@ metadata:
   namespace: kube-system
 data:
   mapRoles: |
-    - rolearn: "${ROLE_ARN}"
+    - rolearn: "${SELF_MANAGED_ROLE_ARN}"
+      username: system:node:{{EC2PrivateDNSName}}
+      groups:
+        - system:bootstrappers
+        - system:nodes
+    - rolearn: "${AWS_MANAGED_ROLE_ARN}"
       username: system:node:{{EC2PrivateDNSName}}
       groups:
         - system:bootstrappers

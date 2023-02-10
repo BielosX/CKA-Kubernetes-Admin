@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tolerations-deployment
+spec:
+  selector:
+    matchLabels:
+      name: tolerations
+  template:
+    metadata:
+      labels:
+        name: tolerations
+    spec:
+      nodeSelector:
+        nodeType: "self-managed"
+      tolerations:
+        - key: "nodeType"
+          value: "self-managed"
+          operator: "Equal"
+          effect: "NoSchedule"
+      containers:
+        - name: hello
+          image: alpine:3.17.1
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "while true; do echo 'Hello!'; sleep 2; done"

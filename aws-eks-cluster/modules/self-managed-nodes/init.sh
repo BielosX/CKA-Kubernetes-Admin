@@ -14,5 +14,18 @@ exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
   /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:${cw_config_param}
 
-  /etc/eks/bootstrap.sh "${cluster_name}" \
-    --container-runtime containerd
+  extra_args=""
+  if [[ "${labels}" != "" ]]; then
+    extra_args+=" --node-labels ${labels}"
+  fi
+  if [[ "${taints}" != "" ]]; then
+    extra_args+=" --register-with-taints ${taints}"
+  fi
+  if [ "$extra_args" == "" ]; then
+    /etc/eks/bootstrap.sh "${cluster_name}" \
+      --container-runtime containerd
+  else
+    /etc/eks/bootstrap.sh "${cluster_name}" \
+      --container-runtime containerd \
+      --kubelet-extra-args "$extra_args"
+  fi

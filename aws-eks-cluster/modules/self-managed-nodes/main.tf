@@ -92,13 +92,22 @@ resource "aws_security_group_rule" "extension-api-server-inbound" {
   security_group_id = aws_security_group.instance-sg.id
 }
 
+locals {
+  taints = [
+    for taint in var.taints:
+          "${taint.key}=${taint.value}:${taint.effect}"
+  ]
+}
+
 resource "aws_launch_template" "launch-template" {
   image_id = data.aws_ssm_parameter.image-id.value
   instance_type = var.instance-type
   vpc_security_group_ids = [aws_security_group.instance-sg.id]
   user_data = base64encode(templatefile("${path.module}/init.sh", {
     cw_config_param: aws_ssm_parameter.cloud-watch-agent-config.id
-    cluster_name: var.cluster-name
+    cluster_name: var.cluster-name,
+    labels: join(",", [for k,v in var.labels: "${k}=${v}"])
+    taints: join(",", local.taints)
   }))
   iam_instance_profile {
     arn = aws_iam_instance_profile.instance-profile.arn
