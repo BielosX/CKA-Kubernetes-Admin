@@ -332,6 +332,21 @@ function delete_taint_tolerations() {
   kubectl delete -f taint-tolerations/deployment.yaml
 }
 
+function deploy_target_group_binding() {
+  lb_arn=$(aws elbv2 describe-load-balancers --names "demo-cluster-load-balancer" \
+    jq -r '.LoadBalancers[0].LoadBalancerArn')
+  tg_arn=$(aws elbv2 describe-target-groups --load-balancer-arn "$lb_arn" \
+    --names "demo-cluster-demo-target" | jq -r '.TargetGroups[0].TargetGroupArn')
+  pushd target-group-binding || exit
+  export TARGET_GROUP_ARN="$tg_arn"
+  envsubst < nginx.yaml | kubectl apply -f -
+  popd || exit
+}
+
+function delete_target_group_binding() {
+  kubectl delete -f target-group-binding/nginx.yaml
+}
+
 case "$1" in
   "bind-dns-package") create_bind_dns_package ;;
   "deploy-bind-dns-config") deploy_bind_dns_config ;;
@@ -353,4 +368,6 @@ case "$1" in
   "delete-aws-nginx-controller-ingress") delete_aws_nginx_controller_ingress ;;
   "deploy-taint-tolerations") deploy_taint_tolerations ;;
   "delete-taint-tolerations") delete_taint_tolerations ;;
+  "deploy-target-group-binding") deploy_target_group_binding ;;
+  "delete-target-group-binding") delete_target_group_binding ;;
 esac

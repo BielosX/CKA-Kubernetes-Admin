@@ -81,3 +81,11 @@ module "control-plane-sg-rules" {
   cluster-security-group-id = module.eks.cluster-security-group-id
   self-managed-nodes-security-group-id = module.self-managed-nodes.security-group-id
 }
+
+module "alb" {
+  source = "./modules/alb"
+  cluster-name = var.cluster-name
+  cluster-sg = module.eks.cluster-security-group-id
+  lb-subnets = module.vpc.public-subnet-ids
+  vpc-id = module.vpc.vpc-id
+}
