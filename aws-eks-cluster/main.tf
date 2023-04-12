@@ -89,3 +89,12 @@ module "alb" {
   lb-subnets = module.vpc.public-subnet-ids
   vpc-id = module.vpc.vpc-id
 }
+
+resource "aws_security_group_rule" "cluster-sg-ingress" {
+  from_port = 1024
+  protocol = "tcp"
+  security_group_id = module.eks.cluster-security-group-id
+  to_port = 65535
+  type = "ingress"
+  source_security_group_id = module.alb.security-group-id
+}

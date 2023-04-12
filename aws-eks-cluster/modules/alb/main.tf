@@ -7,7 +7,7 @@ resource "aws_security_group" "lb-security-group" {
     to_port = 80
   }
   egress {
-    security_groups = [var.cluster-sg]
+    cidr_blocks = ["0.0.0.0/0"]
     protocol = "tcp"
     from_port = 1024
     to_port = 65535
@@ -25,13 +25,21 @@ resource "aws_lb" "load-balancer" {
 }
 
 resource "aws_alb_target_group" "target-group" {
-  name = "${var.cluster-name}-demo-target"
-  target_type = "ip"
+  target_type = "instance"
   port = 8080
   protocol = "HTTP"
   vpc_id = var.vpc-id
+  health_check {
+    matcher = "200-299"
+    path = "/"
+    protocol = "HTTP"
+  }
   tags = {
     "kubernetes.io/cluster/${var.cluster-name}": "owned"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -41,7 +49,25 @@ resource "aws_alb_listener" "listener" {
   protocol = "HTTP"
 
   default_action {
+    type = "redirect"
+    redirect {
+      status_code = "HTTP_301"
+      path = "/"
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "forward-rule" {
+  listener_arn = aws_alb_listener.listener.arn
+
+  action {
     type = "forward"
     target_group_arn = aws_alb_target_group.target-group.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
   }
 }

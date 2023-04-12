@@ -23,7 +23,7 @@ kind: Service
 metadata:
   name: nginx-service
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     name: demo-nginx
   ports:
@@ -39,5 +39,5 @@ spec:
   serviceRef:
     name: nginx-service
     port: 8080
-  targetType: ip
+  targetType: instance
   targetGroupARN: "$TARGET_GROUP_ARN"
