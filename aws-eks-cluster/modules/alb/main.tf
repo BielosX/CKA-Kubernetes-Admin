@@ -19,6 +19,9 @@ resource "aws_lb" "load-balancer" {
   load_balancer_type = "application"
   security_groups = [aws_security_group.lb-security-group.id]
   subnets = var.lb-subnets
+  tags = {
+    "kubernetes.io/cluster/${var.cluster-name}": "owned"
+  }
 }
 
 resource "aws_alb_target_group" "target-group" {
@@ -27,6 +30,9 @@ resource "aws_alb_target_group" "target-group" {
   port = 8080
   protocol = "HTTP"
   vpc_id = var.vpc-id
+  tags = {
+    "kubernetes.io/cluster/${var.cluster-name}": "owned"
+  }
 }
 
 resource "aws_alb_listener" "listener" {

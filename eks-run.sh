@@ -333,10 +333,8 @@ function delete_taint_tolerations() {
 }
 
 function deploy_target_group_binding() {
-  lb_arn=$(aws elbv2 describe-load-balancers --names "demo-cluster-load-balancer" \
-    jq -r '.LoadBalancers[0].LoadBalancerArn')
-  tg_arn=$(aws elbv2 describe-target-groups --load-balancer-arn "$lb_arn" \
-    --names "demo-cluster-demo-target" | jq -r '.TargetGroups[0].TargetGroupArn')
+  tg_arn=$(aws elbv2 describe-target-groups \
+    --names "eks-demo-cluster-demo-target" | jq -r '.TargetGroups[0].TargetGroupArn')
   pushd target-group-binding || exit
   export TARGET_GROUP_ARN="$tg_arn"
   envsubst < nginx.yaml | kubectl apply -f -
