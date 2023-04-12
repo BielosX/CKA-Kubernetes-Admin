@@ -26,7 +26,7 @@ resource "aws_lb" "load-balancer" {
 
 resource "aws_alb_target_group" "target-group" {
   name = "${var.cluster-name}-demo-target"
-  target_type = "instance"
+  target_type = "ip"
   port = 8080
   protocol = "HTTP"
   vpc_id = var.vpc-id

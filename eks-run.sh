@@ -201,10 +201,15 @@ EOM
 }
 
 function destroy() {
-  get_all_k8s_managed_alb
-  helm uninstall ingress-nginx -n kube-system
-  delete_all_k8s_resources
-  wait_for_alb_destroy "$alb"
+  if aws eks describe-cluster --name eks-demo-cluster > /dev/null  2>&1; then
+    echo "Cluster exists. Deleting resources"
+    get_all_k8s_managed_alb
+    helm uninstall ingress-nginx -n kube-system
+    delete_all_k8s_resources
+    wait_for_alb_destroy "$alb"
+  else
+    echo "Cluster does not exist"
+  fi
 
   pushd aws-eks-cluster/live/qa || exit
   terraform destroy -auto-approve || exit
