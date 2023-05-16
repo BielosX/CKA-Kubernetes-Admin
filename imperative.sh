@@ -12,4 +12,9 @@ rm "$temp_path"
 # Expose Redis server created in test-namespace as NodePort service available on 30123
 kubectl create namespace test-namespace
 kubectl run redis --image=redis:7-alpine --port 6379 -n test-namespace
-kubectl create service nodeport redis-service --tcp=6379:6379 --node-port=30123 -n test-namespace
+# Random NodePort will be generated
+kubectl expose pod redis -n test-namespace --type NodePort --port 6379 --target-port 6379
+# Setup editor 
+export KUBE_EDITOR=nvim
+# Edit service config and change NodePort property to 30123
+kubectl edit service redis -n test-namespace
