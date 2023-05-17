@@ -31,3 +31,7 @@ kubectl get pods -o=jsonpath='{.items[*].status.podIP}'
 
 # Get podIPs of all Pods using JSONPATH, every IP in separated line
 kubectl get pods -o=jsonpath='{range .items[*]}{.status.podIP}{"\n"}{end}'
+
+
+# Get pod-template-hash for ReplicaSets with 0 replicas using JSONPATH, every result in separated line
+kubectl get replicasets -o=jsonpath='{range .items[?(@.status.replicas==0)]}{.metadata.labels.pod-template-hash}{"\n"}{end}'
