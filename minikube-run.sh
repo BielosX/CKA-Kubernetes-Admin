@@ -244,6 +244,32 @@ function get_secret_volume_content() {
   echo "username: ${username}, password: ${password}"
 }
 
+function sidecar_nginx_proxy() {
+  pushd sidecar-nginx-proxy || exit
+   kubectl create configmap app-code \
+     --from-file=main.py \
+     --from-file=requirements.txt \
+     --dry-run=client -o yaml | kubectl apply -f -
+   kubectl create configmap nginx-conf \
+     --from-file=nginx.conf \
+     --dry-run=client -o yaml | kubectl apply -f -
+   kubectl create configmap generate-cert \
+     --from-file=cert.sh \
+     --dry-run=client -o yaml | kubectl apply -f -
+  kubectl apply -f main.yaml
+  minikube service sidecar --url
+  popd || exit
+}
+
+function sidecar_nginx_proxy_delete() {
+  pushd sidecar-nginx-proxy || exit
+  kubectl delete -f main.yaml
+  kubectl delete configmap generate-cert
+  kubectl delete configmap nginx-conf
+  kubectl delete configmap app-code
+  popd || exit
+}
+
 case "$1" in
   "build-sample-app") build_sample_app ;;
   "simple-pod") run_simple_pod ;;
@@ -284,4 +310,6 @@ case "$1" in
   "delete-secret-deployment") delete_secret_deployment ;;
   "connect-secret-deployment-db") connect_secret_deployment_db ;;
   "get-secret-volume-content") get_secret_volume_content ;;
+  "sidecar-nginx-proxy") sidecar_nginx_proxy ;;
+  "sidecar-nginx-proxy-delete") sidecar_nginx_proxy_delete ;;
 esac

@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidecar
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: sidecar
+  template:
+    metadata:
+      labels:
+        name: sidecar
+    spec:
+      volumes:
+        - name: generate-cert
+          configMap:
+            defaultMode: 511
+            name: generate-cert
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+        - name: cert
+          emptyDir:
+            sizeLimit: 500Mi
+        - name: app-code
+          configMap:
+            name: app-code
+      initContainers:
+        - name: generate-cert
+          image: alpine:3.18.0
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "/opt/cert.sh"
+          volumeMounts:
+            - mountPath: /etc/nginx/cert
+              name: cert
+            - mountPath: /opt
+              name: generate-cert
+      containers:
+        - name: proxy
+          image: nginx:1.25.0-alpine
+          startupProbe:
+            periodSeconds: 10
+            failureThreshold: 5
+            httpGet:
+              scheme: HTTPS
+              path: /hello
+              port: 443
+          livenessProbe:
+            periodSeconds: 10
+            httpGet:
+              scheme: HTTPS
+              path: /hello
+              port: 443
+          readinessProbe:
+            periodSeconds: 10
+            httpGet:
+              scheme: HTTPS
+              path: /hello
+              port: 443
+          volumeMounts:
+            - mountPath: /etc/nginx/cert
+              name: cert
+            - mountPath: /etc/nginx/nginx.conf
+              name: nginx-conf
+              subPath: nginx.conf
+          ports:
+            - containerPort: 443
+        - name: app
+          image: python:3.11-alpine
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "pip install -r /opt/requirements.txt && gunicorn --bind 0.0.0.0:8080 main:app --chdir /opt"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /opt
+              name: app-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sidecar
+spec:
+  type: NodePort
+  selector:
+    name: sidecar
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 443
